@@ -1,7 +1,10 @@
 import { Request, Response } from "restify";
 
 export const handleError = (req: Request, resp: Response, err: any, done: any) => {
+	console.log("\x1b[35m%s\x1b[0m", ("-").repeat(40));
 	console.log("\x1b[31m%s\x1b[0m", JSON.stringify(err));
+	console.log(err.stack || "");
+	console.log("\x1b[35m%s\x1b[0m", ("-").repeat(40));
 
 	err.toJSON = () => ({
 		message: err.message || err.stack || err,

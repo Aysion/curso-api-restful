@@ -1,5 +1,7 @@
 import mongoose from "mongoose";
+import { env } from "../../common/env";
 import { validateCPF } from "../../common/validators";
+import { createCipher, createDecipher } from "../../common/crypto-cipher";
 
 export interface User extends mongoose.Document {
 	name: string,
@@ -40,6 +42,34 @@ const userSchema = new mongoose.Schema({
 	}
 });
 
+const hashPassword = (obj: any) => {
+	obj.password = createCipher(obj.password, env.db.crypto);
+};
+
+const saveMiddleware = function(next: any) {
+	const user: User = this;
+
+	if (user.isModified('password')) {
+		hashPassword(user);
+	}
+
+	next();
+};
+
+const updateMiddleware = function(next:any) {
+	if (this.getUpdate().$set.password) {
+		hashPassword(this.getUpdate().$set);
+	}
+	console.log(this.getUpdate().$set);
+
+	next();
+};
+
+userSchema.pre('save', saveMiddleware);
+
+userSchema.pre('findOneAndUpdate', updateMiddleware);
+userSchema.pre('updateOne', updateMiddleware);
+
 export const User = mongoose.model<User>('User', userSchema);
 
 /**
@@ -55,6 +85,13 @@ export const User = mongoose.model<User>('User', userSchema);
 		"name": "Bruce Wayne",
 		"email": "bruce@mavel.com",
 		"password": "batman"
-	}
+	},
+	{
+        "name": "Diana",
+        "email": "dia2@dc.com",
+        "password": "bruce",
+        "gender": "Male",
+        "cpf": "892.042.680-50"
+    }
 ]
 */
